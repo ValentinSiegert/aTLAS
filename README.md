@@ -35,8 +35,10 @@ aTLAS project page: [https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/]
     ```bash
     --noreload
     ```
+	
+5. Add a new SECRET_KEY to `djtrustlab/settings.py` as current one is empty.
 
-5. Install also at least one supervisor. (https://github.com/N0omB/aTLAS_host)
+6. Install also at least one supervisor. (https://github.com/N0omB/aTLAS_host)
 
    
 ## Run
