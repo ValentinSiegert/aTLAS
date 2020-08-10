@@ -1,0 +1,90 @@
+#corner-button {
+      position: fixed;
+      display: block;
+      right: 0;
+      bottom: 0;
+      margin-right: 40px;
+      margin-bottom: 40px;
+      z-index: 900;
+    }
+
+.mdl-layout-title a {
+  color:inherit;
+  text-decoration:none;
+}
+
+.mdl-menu__item {
+  color:inherit;
+  text-decoration:none;
+}
+
+.mdl-grid.mdl-grid--centered {
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center
+}
+
+footer.mdl-mini-footer {
+  padding-top: .25rem;
+  padding-bottom: .25rem;
+  opacity: .64;
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
+  -webkit-justify-content: flex-end;
+  justify-content: flex-end;
+  line-height:36px!important;
+}
+
+footer.mdl-mini-footer div.mdl-logo {
+  margin-right:16px;
+}
+
+footer.mdl-mini-footer a {
+  line-height:36px;
+}
+
+.not-displayed {
+    display: none;
+}
+
+.scenario-ul {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.scenario-ul li {
+    padding-top: 0;
+}
+
+.mdl-snackbar__icon {
+  color: #29EB36;
+  padding: 13px 0 0 24px;
+}
+
+.mdl-snackbar__action {
+    color: #29EB36;
+}
+
+.trustlab-li-body {
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 18px;
+    margin-top: 1em;
+    margin-bottom: 1.2em;
+    color: rgba(0,0,0,.54);
+    display: block;
+    padding: 0;
+}
+
+.trustlab-li-body ul, .trustlab-li-body ol {
+    font-size: inherit;
+    padding-inline-start: 2em;
+}
+
+.trustlab-li-body ul ul {
+    font-size: inherit;
+    padding-inline-start: 1.2em;
+}

@@ -1,0 +1,9 @@
+.idea/
+djtrustlab/__pycache__
+__pycache__
+deploy/
+.vscode
+env/
+trustlab/lab/log/*
+venv/
+.DS_Store

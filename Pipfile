@@ -1,0 +1,18 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+pytz = "==2019.2"
+djangorestframework = "==3.10.3"
+channels = "==2.3.1"
+asgiref = "==3.2.3"
+channels-redis = "==2.4.2"
+Django = "==2.1.12"
+python-serializer = "==1.0.2"
+
+[requires]
+python_version = "3.7"
