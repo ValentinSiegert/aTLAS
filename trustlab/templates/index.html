@@ -9,253 +9,27 @@ aTLAS
 {#{% block nav_home %}class="active"{% endblock %}#}
 
 {% block scripts %}
-<script src="{% static 'trustlab/scripts/trustlab.js' %}"></script>
-<script>
-    let scenarios;
-    {% if scenarios %}
+    <script>
+        let scenarios;
+        {% if scenarios %}
         scenarios = {{ scenarios_JSON|safe }};
-    {% endif %}
-    const INDEX_URL = "{{ index_url }}"
-    const LAB_URL = "{{ lab_url }}"
-</script>
+        {% endif %}
+        const INDEX_URL = "{{ index_url }}"
+        const LAB_URL = "{{ lab_url }}"
+        let scenario_load_error;
+        {% if ScenarioLoadError %}
+        scenario_load_error = "{{ ScenarioLoadError }}";
+        {% endif %}
+    </script>
+    <script src="{% static 'trustlab/scripts/trustlab.js' %}"></script>
 {% endblock %}
 
 {% block body %}
-    <div class="component-start" id="c-start">
-        <div class="mdl-grid mdl-grid--centered">
-            <div class="mdl-cell mdl-cell--9-col mdl-cell--8-col-tablet">
-                <div class="mdl-card mdl-shadow--2dp mdl-card--stretch" style="width: auto;">
-                    <div class="mdl-card__title mdl-card--border">
-                        <h2 class="mdl-card__title-text">Trust Laboratory</h2>
-                    </div>
-                    <div class="mdl-card__supporting-text">
-                        <p>
-                            This is the access point for a Trust laboratory of Multi-Agent Systems, called aTLAS.<br>
-                            <!--Its focus lies on open dynamic Multi-Agent Systems, but you can also use it for other scenarios.-->
-                        </p>
-                        <p>
-                            A wizard will guide you through the process:
-                        </p>
-                        <div class="mdl-card__actions mdl-card--border">
-                            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect"
-                                    id="btn-specify-scenario">Specify Scenario</button>
-{#                            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect mdl-button--disabled"#}
-{#                                    id="btn-recent-eval">Prepared demo results</button>#}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="component-scenario not-displayed" id="c-scenario">
-        <div class="mdl-grid mdl-grid--centered">
-            <div class="mdl-cell mdl-cell--9-col mdl-cell--8-col-tablet">
-                <div class="mdl-card mdl-shadow--2dp mdl-card--stretch" style="width: auto;">
-                    <div class="mdl-card__title mdl-card--border">
-                        <h2 class="mdl-card__title-text">Specify Scenario</h2>
-                    </div>
-                    <div class="mdl-card__supporting-text">
-                        <p>
-                            For demo purposes you can currently only reuse certain prepared scenarios.<br>
-                            In future versions you will be able to also create your own scenario here.
-                        </p>
-                        <p>
-                            <b>
-                                Please choose a scenario and proceed with starting the laboratory runtime:
-                            </b>
-                        </p>
-                        <form class="mdl-grid">
-                        {% csrf_token %}
-{#                            <div class="mdl-selectfield mdl-js-selectfield mdl-selectfield--floating-label">#}
-{#                              <select id="selector-scenario" class="mdl-selectfield__select">#}
-{#                                <option value=""></option>#}
-{#                                {% for scenario in scenarios %}#}
-{#                                <option value="{{scenario.name|safe}}">{{scenario.name|safe}}</option>#}
-{#                                {% endfor %}#}
-{#                              <option value="91" disabled="disabled">91</option>#}
-{#                              </select>#}
-{#                              <label class="mdl-selectfield__label" for="selector-scenario">Scenario</label>#}
-{#                              <span id="selector-scenario-error" class="mdl-selectfield__error">Select a Scenario</span>#}
-{#                            </div>#}
-                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                              <select class="mdl-textfield__input" id="selector-scenario" name="scenario">
-                                <option></option>
-                                {% for scenario in scenarios %}
-                                <option value="{{scenario.name|safe}}">{{scenario.name|safe}}</option>
-                                {% endfor %}
-{#                                <option value="91" disabled="disabled">91</option>#}
-                              </select>
-                              <label class="mdl-textfield__label" for="selector-scenario">Scenario</label>
-                              <span id="selector-scenario-error" class="mdl-textfield__error">Select a Scenario</span>
-                            </div>
-                        </form>
-                        {% for scenario in scenarios %}
-                        <ul class="mdl-list scenario-ul not-displayed" data-scenario="{{scenario.name|safe}}">
-                          <li class="mdl-list__item">
-                            <span>
-                              <span class="mdl-list__item-primary-content">Description</span>
-                              <span class="trustlab-li-body">
-                                {{scenario.description|safe}}
-                              </span>
-                            </span>
-                          </li>
-                          <li class="mdl-list__item">
-                            <span>
-                              <span class="mdl-list__item-primary-content">Agents</span>
-                              <span class="trustlab-li-body">
-                                <!-- This scenario includes following Agents: <br> -->
-                                {% for agent in scenario.agents %}
-                                    {{ agent }}{% if not forloop.last %},{% endif %}
-                                {% endfor %}
-                              </span>
-                            </span>
-                          </li>
-                          <li class="mdl-list__item">
-                            <span>
-                              <span class="mdl-list__item-primary-content">Observations</span>
-                              <span class="trustlab-li-body">
-                                <ol>
-                                {% for observation in scenario.observations %}
-                                    <li value="{{ observation.observation_id }}">
-                                    <!--'{{ observation.sender }}' sends '{{ observation.receiver }}' from author '{{ observation.author }}' with topic '{{ observation.topic }}' the message: {{ observation.message }} -->
-                                    '{{ observation.sender }}' sends '{{ observation.receiver }}' after {{ observation.before }}, topic '{{ observation.topic }}', message: {{ observation.message }}
-                                    </li>
-                                {% endfor %}
-                                </ol>
-                              </span>
-                            </span>
-                          </li>
-                          <li class="mdl-list__item">
-                            <span>
-                              <span class="mdl-list__item-primary-content">Trust History</span>
-                              <span class="trustlab-li-body">
-                                {% for agent, agents_history in scenario.history.items %}
-                                    {{ agent }} trusted <br>
-                                    <ul>
-                                    {% for other_agent, value in agents_history.items %}
-                                        <li>
-                                        {{ other_agent }} with a trust value of {{ value }}
-                                        </li>
-                                    {% endfor %}
-                                    </ul>
-                                    {% if not forloop.last %}<br>{% endif %}
-                                {% endfor %}
-                              </span>
-                            </span>
-                          </li>
-                          <li class="mdl-list__item">
-                            <span>
-                              <span class="mdl-list__item-primary-content">Trust Metrics</span>
-                              <span class="trustlab-li-body">
-                                {% for agent, metrics in scenario.metrics_per_agent.items %}
-                                    {{ agent }} uses the metrics: <br>
-                                    {% for metric in metrics %}
-                                        {{ metric }}{% if not forloop.last %},{% endif %}{% if forloop.last %}<br>{% endif %}
-                                    {% endfor %}
-                                    {% if not forloop.last %}<br>{% endif %}
-                                {% endfor %}
-                              </span>
-                            </span>
-                          </li>
-                          {% if scenario.authorities %}
-                          <li class="mdl-list__item">
-                            <span>
-                              <span class="mdl-list__item-primary-content">Authorities</span>
-                              <span class="trustlab-li-body">
-                                {% for agent, authorities in scenario.authorities.items %}
-                                    {% if authorities %}
-                                    {{ agent }} considers the following agents as authorities: <br>
-                                    {% for authority in authorities %}
-                                        {{ authority }}{% if not forloop.last %},{% endif %}{% if forloop.last %}<br>{% endif %}
-                                    {% endfor %}
-                                    {% if not forloop.last %}<br>{% endif %}
-                                    {% endif %}
-                                {% endfor %}
-                              </span>
-                            </span>
-                          </li>
-                          {% endif %}
-                          {% if scenario.topics %}
-                          <li class="mdl-list__item">
-                            <span>
-                              <span class="mdl-list__item-primary-content">Topic Trust</span>
-                              <span class="trustlab-li-body">
-                                {% for agent, agents_topics in scenario.topics.items %}
-                                    {{ agent }} trusts <br>
-                                    <ul style="list-style-type:none; padding-inline-start: 1em;">
-                                    {% for other_agent, topics in agents_topics.items %}
-                                        <li>
-                                        {{ other_agent }}
-                                        <ul>
-                                        {% for topic, value in topics.items %}
-                                            <li>
-                                             at topic '{{ topic }}' with a trust value of {{ value }}
-                                            </li>
-                                        {% endfor %}
-                                        </ul>
-                                        </li>
-                                    {% endfor %}
-                                    </ul>
-                                {% endfor %}
-                              </span>
-                            </span>
-                          </li>
-                          {% endif %}
-{#                        For each important aspect in the scenario you can print it out here within this list #}
-                        </ul>
-                        {% endfor %}
-                        <div class="mdl-card__actions mdl-card--border">
-                            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect"
-                                    id="btn-run-scenario">Start laboratory runtime</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="component-runtime not-displayed" id="c-runtime">
-        <div class="mdl-grid mdl-grid--centered">
-            <div class="mdl-cell mdl-cell--9-col mdl-cell--8-col-tablet">
-                <div class="mdl-card mdl-shadow--2dp mdl-card--stretch" style="width: auto;">
-                    <div class="mdl-card__title mdl-card--border">
-                        <h2 class="mdl-card__title-text">Laboratory Runtime</h2>
-                    </div>
-                    <div class="mdl-card__supporting-text">
-                        <p>
-                            Please wait while the laboratory is running the chosen scenario.
-                        </p>
-                        <div id="p2" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="component-runtime not-displayed" id="c-results">
-        <div class="mdl-grid mdl-grid--centered">
-            <div class="mdl-cell mdl-cell--9-col mdl-cell--8-col-tablet">
-                <div class="mdl-card mdl-shadow--2dp mdl-card--stretch" style="width: auto;">
-                    <div class="mdl-card__title mdl-card--border">
-                        <h2 class="mdl-card__title-text">Results</h2>
-                    </div>
-                    <div class="mdl-card__supporting-text">
-                        <p>
-                            Your scenario finished!<br>
-                            For respective results see forward below:
-                        </p>
-                        <p>
-                            Trust Log:
-                        </p>
-                        <pre id="trust_log">
-                            If you see this text, the logs were unfortunately not passed correctly to your client. (trust_log)
-                        </pre>
-                        <div id="agents_log_end"></div>
-                        <div class="mdl-card__actions mdl-card--border">
-                            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect"
-                                    id="btn-specify-scenario2">Specify another Scenario</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% include "cards/start.html" %}
+    {% include "cards/pick_results.html" %}
+    {% include "cards/scenario.html" %}
+    {% include "cards/runtime.html" %}
+    {% include "cards/loading_results.html" %}
+    {% include "cards/results.html" %}
+    {% include "cards/about.html" %}
 {% endblock %}

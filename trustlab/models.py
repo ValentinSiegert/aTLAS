@@ -4,12 +4,11 @@ import re
 import importlib
 import importlib.util
 import inspect
-from os import listdir
-from os.path import isfile, join, dirname, abspath
-
-# TODO bring these config vars in config file
-SCENARIO_PATH = '/trustlab/lab/scenarios'
-SCENARIO_PACKAGE = "trustlab.lab.scenarios"
+from os import listdir, mkdir
+from os.path import isfile, join, exists, isdir
+import pprint
+from trustlab.lab.config import SCENARIO_PATH, SCENARIO_PACKAGE, RESULT_PATH
+import traceback
 
 
 class Supervisor(models.Model):
@@ -18,93 +17,122 @@ class Supervisor(models.Model):
     agents_in_use = models.IntegerField(default=0)
 
 
-class ScenarioFactory:
-    # load all scenarios in /trustlab/lab/scenarios with dynamic read of parameters from Scenario.__init__
+class ObjectFactory:
     @staticmethod
-    def load_scenarios():
-        scenarios = []
-        project_path = abspath(dirname(__name__))
-        # path of scenario_config_module files
-        scenario_path = project_path + SCENARIO_PATH
-        scenario_file_names = [file for file in listdir(scenario_path)
-                               if isfile(join(scenario_path, file)) and file.endswith("_scenario.py")]
-        for file_name in scenario_file_names:
-            # python package path
-            import_package = SCENARIO_PACKAGE + '.' + file_name.split(".")[0]
-            # ensure package is accessible
-            implementation_spec = importlib.util.find_spec(import_package)
-            if implementation_spec is not None:
-                # check if module was imported during runtime to decide if reload is required
-                scenario_spec = importlib.util.find_spec(import_package)
-                # import scenario config to variable
-                scenario_config_module = importlib.import_module(import_package)
-                # only reload module after importing if spec was found before
-                if scenario_spec is not None:
-                    scenario_config_module = importlib.reload(scenario_config_module)
-                # get all parameters of scenario init
-                scenario_args = inspect.getfullargspec(Scenario.__init__)
-                # get only args without default value and not self parameter and capitalize them
-                mandatory_args = [a.upper() for a in scenario_args.args[1:-len(scenario_args.defaults)]]
-                all_args = [a.upper() for a in scenario_args.args[1:]]
-                # check if all mandatory args are in scenario config
-                if all(hasattr(scenario_config_module, attr) for attr in mandatory_args):
-                    scenario_attrs = []
-                    for attr in all_args:
-                        # check if attr is in config as some are optional with default value
-                        if hasattr(scenario_config_module, attr):
-                            scenario_attrs.append(getattr(scenario_config_module, attr))
-                    try:
-                        # add all attrs which are in config to scenario object
-                        scenario = Scenario(*scenario_attrs)
-                    except ValueError as value_error:
-                        # TODO log value_error
-                        continue
-                    if any(scen.name == scenario.name for scen in scenarios):
-                        # TODO log non-loading of scenario due to name is already given
-                        continue
-                    scenario.file_name = file_name
-                    scenarios.append(scenario)
-        return scenarios
+    def load_object(file_package, object_package, object_class_name):
+        # python package path
+        import_package = f"{object_package}.{file_package}"
+        # ensure package is accessible
+        implementation_spec = importlib.util.find_spec(import_package)
+        if implementation_spec is not None:
+            # check if module was imported during runtime to decide if reload is required
+            object_spec = importlib.util.find_spec(import_package)
+            # import scenario config to variable
+            object_config_module = importlib.import_module(import_package)
+            # only reload module after importing if spec was found before
+            if object_spec is not None:
+                object_config_module = importlib.reload(object_config_module)
+            # get all parameters of scenario init
+            object_args = inspect.getfullargspec(Scenario.__init__)
+            # get only args without default value and not self parameter and capitalize them
+            mandatory_args = [a.upper() for a in object_args.args[1:-len(object_args.defaults)]]
+            all_args = [a.upper() for a in object_args.args[1:]]
+            # check if all mandatory args are in scenario config
+            if all(hasattr(object_config_module, attr) for attr in mandatory_args):
+                object_attrs = []
+                for attr in all_args:
+                    # check if attr is in config as optional ones may not be present with allowance
+                    if hasattr(object_config_module, attr):
+                        object_attrs.append(getattr(object_config_module, attr))
+                # get object's class by name, requires class to be in global spec thus imported
+                object_class = globals()[object_class_name]
+                # add all attrs which are in config to scenario object
+                obj = object_class(*object_attrs)
+                return obj
+            raise AttributeError("One or more mandatory attribute(s) was/were not found in object file.")
 
-    def stringify_arg_value(self, obj, arg):
+    def save_object(self, obj, object_args, file_path, file_exists=False):
+        # all attr
+        all_args = [a.upper() for a in object_args.args[1:]]
+        # distinguish between new file writing or overwriting existing one
+        if file_exists:
+            with open(file_path, 'r+') as object_file:
+                # read in file
+                object_data = object_file.read()
+                # exchange all args which are in config file data
+                for arg in all_args:
+                    # create regex to find argument with value.
+                    replacement = re.compile(arg + r' = .*\n\n', re.DOTALL)  # variables ends with double new lines
+                    value = self.stringify_arg_value(obj, arg)
+                    if re.search(replacement, object_data):
+                        # substitute current value in config_data. Double new lines are added to help parsing
+                        object_data = replacement.sub(f"{arg} = {value}\n\n", object_data)
+                    else:
+                        # get position of last non whitespace char in config data
+                        position = object_data.rfind(next((char for char in reversed(object_data) if char != "\n"
+                                                           and char != "\t" and char != " "))) + 1
+                        arg_value = f"\n\n{arg} = {value}"  # Double new lines are added to help parsing
+                        # append argument configuration at position -> end of file + whitespace tail
+                        object_data = object_data[:position] + arg_value + object_data[position:]
+                # jump back to begin of file and write new data
+                object_file.seek(0)
+                object_file.write(object_data)
+                object_file.truncate()
+        else:
+            with open(file_path, 'w+') as object_file:
+                print('"""', file=object_file)
+                print('This file was auto-generated by an ObjectFactory of aTLAS', file=object_file)
+                print('"""\n\n', file=object_file)
+                for arg in all_args:
+                    value = self.stringify_arg_value(obj, arg)
+                    print(f"{arg} = {value}\n", file=object_file)  # Double new lines are added to help parsing
+                print("\n\n\n", file=object_file) # 4 new lines at end of file
+
+    @staticmethod
+    def stringify_arg_value(obj, arg):
         value = getattr(obj, arg.lower())
-        # add surrounding " if variable is of type string
-        if isinstance(getattr(obj, arg.lower()), str):
-            value = '"' + value + '"'
-        return str(value)
+        # Prettifying the value for better human readability.
+        value_prettified = pprint.pformat(value)
+        return value_prettified
+
+    def __init__(self):
+        pass
+
+
+class ScenarioFactory(ObjectFactory):
+    # load all scenarios in /trustlab/lab/scenarios with dynamic read of parameters from Scenario.__init__
+    def load_scenarios(self):
+        scenarios = []
+        scenario_file_names = [file for file in listdir(self.scenario_path)
+                               if isfile(join(self.scenario_path, file)) and file.endswith("_scenario.py")]
+        for file_name in scenario_file_names:
+            file_package = file_name.split(".")[0]
+            try:
+                scenario = self.load_object(file_package, SCENARIO_PACKAGE, "Scenario")
+            except (ValueError, AttributeError):
+                print(f'Error at Scenario file @{file_name}:')
+                traceback.print_exc()
+                continue
+            if any(s.name == scenario.name for s in scenarios):
+                error = f"Scenario {scenario.name}@{file_name} was not loaded due to existing scenario with same name."
+                try:
+                    raise RuntimeError(error)
+                except RuntimeError:
+                    traceback.print_exc()
+                continue
+            scenario.file_name = file_name
+            scenarios.append(scenario)
+        return scenarios
 
     def save_scenarios(self):
         for scenario in self.scenarios:
-            # create or use existing file name for config file of scenario
-            scenario_path = abspath(dirname(__name__)) + SCENARIO_PATH + "/"
             # get all parameters of scenario init
             scenario_args = inspect.getfullargspec(Scenario.__init__)
             # all attr
-            all_args = [a.upper() for a in scenario_args.args[1:]]
+            # all_args = [a.upper() for a in scenario_args.args[1:]]
             if hasattr(scenario, "file_name"):
-                config_path = scenario_path + scenario.file_name
-                with open(config_path, 'r+') as config_file:
-                    # read in file
-                    config_data = config_file.read()
-                    # exchange all args which are in config file data
-                    for arg in all_args:
-                        # create regex to find argument with value
-                        replacement = re.compile(arg + r' = .*\n')
-                        value = self.stringify_arg_value(scenario, arg)
-                        if re.search(replacement, config_data):
-                            # substitute current value in config_data
-                            config_data = replacement.sub(arg + ' = ' + value + '\n', config_data)
-                        else:
-                            # get position of last non whitespace char in config data
-                            position = config_data.rfind(next((char for char in reversed(config_data) if char != "\n"
-                                                               and char != "\t" and char != " "))) + 1
-                            arg_value = "\n" + arg + " = " + value
-                            # append argument configuration at position -> end of file + whitespace tail
-                            config_data = config_data[:position] + arg_value + config_data[position:]
-                    # jump back to begin of file and write new data
-                    config_file.seek(0)
-                    config_file.write(config_data)
-                    config_file.truncate()
+                config_path = f"{self.scenario_path}/{scenario.file_name}"
+                self.save_object(scenario, scenario_args, config_path, file_exists=True)
             else:
                 # create file name without spaces _ and alphanumeric chars only
                 file_name = re.sub('[^A-Za-z0-9_ ]+', '', scenario.name).replace(" ", "_").lower()
@@ -112,22 +140,66 @@ class ScenarioFactory:
                     file_name += ".py"
                 else:
                     file_name += "_scenario.py"
-                config_path = scenario_path + file_name
-                with open(config_path, 'w+') as config_file:
-                    config_file.write('"""\n')
-                    config_file.write('This file was auto-generated by ScenarioFactory of aTLAS\n')
-                    config_file.write('"""\n')
-                    config_file.write("\n\n")
-                    for arg in all_args:
-                        value = self.stringify_arg_value(scenario, arg)
-                        config_file.write(arg + " = " + value + "\n")
-                    config_file.write("\n\n\n\n")
+                config_path = f"{self.scenario_path}/{file_name}"
+                self.save_object(scenario, scenario_args, config_path)
 
     def __init__(self):
-        self.scenarios = ScenarioFactory.load_scenarios()
+        super().__init__()
+        self.scenario_path = SCENARIO_PATH
+        self.scenarios = self.load_scenarios()
         self.init_scenario_number = len(self.scenarios)
 
     def __del__(self):
         self.save_scenarios()
 
+
+class ScenarioResult:
+    def __init__(self, scenario_run_id, trust_log, agent_trust_logs):
+        self.scenario_run_id = scenario_run_id
+        self.trust_log = trust_log
+        self.agent_trust_logs = agent_trust_logs
+
+
+class ResultFactory:
+    def list_known_scenario_run_ids(self):
+        return [directory for directory in listdir(self.result_path) if isdir(f"{self.result_path}/{directory}")]
+
+    def get_result(self, scenario_run_id):
+        result_dir = self.get_result_dir(scenario_run_id)
+        if exists(result_dir) and isdir(result_dir):
+            agent_trust_logs = {}
+            trust_log_path = f"{result_dir}/trust_log.txt"
+            with open(trust_log_path, 'r') as trust_log_file:
+                trust_log = [line for line in trust_log_file.readlines() if line != "\n"]
+            agent_trust_logs_paths = [(file_name.split('_trust_log.txt')[0], f"{result_dir}/{file_name}") for file_name
+                                      in listdir(result_dir) if file_name.endswith('_trust_log.txt')]
+            for agent, path in agent_trust_logs_paths:
+                with open(path, 'r') as agent_trust_log_file:
+                    agent_trust_log_lines = [line for line in agent_trust_log_file.readlines() if line != "\n"]
+                    agent_trust_logs[agent] = ''.join(agent_trust_log_lines)
+            return ScenarioResult(scenario_run_id, trust_log, agent_trust_logs)
+        else:
+            raise OSError(f"Given path '{result_dir}' for scenario result read is not a directory or does not exist.")
+
+    def save_result(self, scenario_result):
+        result_dir = self.get_result_dir(scenario_result.scenario_run_id)
+        if not exists(result_dir) or not isdir(result_dir):
+            mkdir(result_dir)
+        trust_log_path = f"{result_dir}/trust_log.txt"
+        with open(trust_log_path, 'w+') as trust_log_file:
+            print(''.join(scenario_result.trust_log), file=trust_log_file)
+        for agent, agent_trust_log in scenario_result.agent_trust_logs.items():
+            agent_trust_log_path = f"{result_dir}/{agent}_trust_log.txt"
+            with open(agent_trust_log_path, 'w+') as agent_trust_log_file:
+                print(''.join(agent_trust_log), file=agent_trust_log_file)
+
+    def get_result_dir(self, scenario_run_id):
+        split_index = len(scenario_run_id.split("_")[0]) + 1  # index to cut constant of runId -> 'scenarioRun_'
+        folder_name = scenario_run_id[split_index:]
+        return f"{self.result_path}/{folder_name}"
+
+    def __init__(self):
+        self.result_path = RESULT_PATH
+        if not exists(RESULT_PATH) or not isdir(RESULT_PATH):
+            mkdir(RESULT_PATH)
 

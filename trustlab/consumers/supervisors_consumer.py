@@ -1,6 +1,5 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from trustlab.models import Supervisor
-from asgiref.sync import async_to_sync
 
 
 class SupervisorsConsumer(AsyncJsonWebsocketConsumer):

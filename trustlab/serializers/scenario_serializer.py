@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from trustlab.models import Scenario
-from trustlab.serializers.stringList_field import StringListField
+from trustlab.serializers.string_list_field import StringListField
 
 
 class ScenarioSerializer(serializers.Serializer):

@@ -6,6 +6,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.reverse import reverse
 from django.http import HttpResponse
 
+
 class IndexView(generic.TemplateView):
     template_name = 'index.html'
 
@@ -23,9 +24,8 @@ class IndexView(generic.TemplateView):
             # add URL of index.html to PUT scenario
             context["index_url"] = reverse('index')
             context["lab_url"] = reverse('lab')
-        except AssertionError as assert_error:
-            # TODO bring assert_error to scenario_error_msg on index.html
-            pass
+        except AssertionError:
+            context["ScenarioLoadError"] = f"No predefined scenarios could be loaded!"
         return context
 
     # currently unused method

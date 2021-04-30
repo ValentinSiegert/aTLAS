@@ -1,3 +1,4 @@
 [submodule "trustlab_host"]
 	path = trustlab_host
-	url = ../aTLAS_host.git
+	url = ../trustlab_host.git
+	branch = public

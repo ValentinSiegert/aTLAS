@@ -5,5 +5,6 @@ deploy/
 .vscode
 env/
 trustlab/lab/log/*
+trustlab/lab/results/*
 venv/
 .DS_Store

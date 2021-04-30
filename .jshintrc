@@ -94,6 +94,9 @@
         "scenarios": true,
         "ajaxFunc": true,
         "INDEX_URL": true,
-        "LAB_URL": true
+        "LAB_URL": true,
+        "waitForSocketConnection": true,
+        "removeUrlFragement": true,
+        "scenario_load_error": true
     }
 }

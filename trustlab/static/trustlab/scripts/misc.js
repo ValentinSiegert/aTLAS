@@ -3,22 +3,6 @@
 This file includes miscellaneous JS functions for the trustlab aTLAS.
  */
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        let cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            let cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
 function snackMessage(isErrorMsg = false, message = "", action = null, actionText = "Got it") {
     const GENERAL_ERROR_MSG = "Something went wrong. Please try again.";
     const GENERAL_SUCCESS_MSG = "Success!";
@@ -26,6 +10,12 @@ function snackMessage(isErrorMsg = false, message = "", action = null, actionTex
     {
         message = isErrorMsg ? GENERAL_ERROR_MSG: GENERAL_SUCCESS_MSG;
     }
+    /**
+     * @typedef {Object} snackBarMDL
+     * @property {Object} MaterialSnackbar
+     * @property {function} showSnackbar
+     */
+    /** @type {snackBarMDL} */
     let snack = document.querySelector("#snack");
     let snack_icon = $("#snack_icon");
     let snack_action = $("#snack_action");
@@ -50,28 +40,6 @@ function snackMessage(isErrorMsg = false, message = "", action = null, actionTex
     snack.MaterialSnackbar.showSnackbar(data);
 }
 
-function ajaxFunc(url, method, data, successHandler, dataType = "json", contentType = "application/json") {
-        $.ajax({
-            url: url,
-            method: method,
-            beforeSend: function (xhr, settings) {
-                if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
-                    xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-                }
-                return true;
-            },
-            dataType: dataType,
-            contentType: contentType,
-            data: data,
-            success: function (result) {
-                successHandler(result);
-            },
-            error: function () {
-                snackMessage(true);
-            }
-        });
-}
-
 function errorInTextfield(selector, message = "")
 {
     if (message !== "")
@@ -81,4 +49,75 @@ function errorInTextfield(selector, message = "")
     selector.parent().addClass("is-invalid is-dirty");
 }
 
+function copy_text_to_clipboard(input_id)
+{
+    let copyText = document.getElementById(input_id);
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+}
 
+// got original function from https://stackoverflow.com/a/21394730
+function waitForSocketConnection(socket, callback, error_callback, waitCounter=0){
+    setTimeout(
+        function () {
+            if (socket.readyState === 1) {
+                if (callback !== null){
+                    callback();
+                }
+            } else if (waitCounter > 9) {
+                if (error_callback !== null) {
+                    error_callback();
+                }
+            } else {
+                waitCounter++;
+                waitForSocketConnection(socket, callback, waitCounter);
+            }
+        }, 5); // wait 5 milliseconds for the connection...
+}
+
+function removeUrlFragement() {
+    if(window.location.hash) {
+        history.pushState(null, null, '#');
+    }
+}
+
+// unused functions, kept for potential re-usage
+
+// function ajaxFunc(url, method, data, successHandler, dataType = "json", contentType = "application/json") {
+//         $.ajax({
+//             url: url,
+//             method: method,
+//             beforeSend: function (xhr, settings) {
+//                 if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+//                     xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+//                 }
+//                 return true;
+//             },
+//             dataType: dataType,
+//             contentType: contentType,
+//             data: data,
+//             success: function (result) {
+//                 successHandler(result);
+//             },
+//             error: function () {
+//                 snackMessage(true);
+//             }
+//         });
+// }
+//
+// function getCookie(name) {
+//     let cookieValue = null;
+//     if (document.cookie && document.cookie !== '') {
+//         let cookies = document.cookie.split(';');
+//         for (let i = 0; i < cookies.length; i++) {
+//             let cookie = jQuery.trim(cookies[i]);
+//             // Does this cookie string begin with the name we want?
+//             if (cookie.substring(0, name.length + 1) === (name + '=')) {
+//                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+//                 break;
+//             }
+//         }
+//     }
+//     return cookieValue;
+// }

@@ -68,6 +68,10 @@ footer.mdl-mini-footer a {
     color: #29EB36;
 }
 
+.scenario-ul > li:last-child {
+    padding-bottom: 0;
+}
+
 .trustlab-li-body {
     font-weight: 400;
     letter-spacing: 0;
@@ -87,4 +91,35 @@ footer.mdl-mini-footer a {
 .trustlab-li-body ul ul {
     font-size: inherit;
     padding-inline-start: 1.2em;
+}
+
+.trustlab-copy-field {
+    width: 29em;
+}
+
+.mdl-dialog {
+    width: 72em;
+}
+
+.mdl-card__supporting-text {
+    width: 98%;
+}
+
+.mdl-card__actions {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+}
+
+.mdl-card__actions > .neighbour-button {
+    margin-left: 1em;
+}
+
+#scenario-details {
+    margin-bottom: 15pt;
+    color: rgb(255,152,0); /* copied from material design light orange */
+}
+
+#scenario-details > summary  {
+    margin-bottom: 10pt;
 }

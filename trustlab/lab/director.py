@@ -4,6 +4,8 @@ from trustlab.lab.connectors.channels_connector import ChannelsConnector
 from trustlab.lab.distributors.greedy_distributor import GreedyDistributor
 from trustlab.lab.distributors.round_robin_distributor import RoundRobinDistributor
 from trustlab.serializers.scenario_serializer import ScenarioSerializer
+from trustlab.models import ResultFactory, ScenarioResult
+from asgiref.sync import sync_to_async
 
 
 class Director:
@@ -14,7 +16,7 @@ class Director:
         free_agents = sums['sum_max_agents'] - sums['sum_agents_in_use']
         if free_agents < len(agents):
             raise Exception('Currently there are not enough agents free for the chosen scenario.')
-        # TODO implement scenario syntax checking (until now not required due to predefined scenarios only)
+        # TODO: implement scenario syntax checking (until now not required due to predefined scenarios only)
         # distribute agents on supervisors
         supervisors_with_free_agents = await self.connector.list_supervisors_with_free_agents()
         self.distribution = await self.distributor.distribute(agents, supervisors_with_free_agents)
@@ -51,7 +53,14 @@ class Director:
         for agent, log in agent_trust_logs.items():
             if len(log) == 0:
                 agent_trust_logs[agent].append("The scenario reported no agent trust log for this agent.")
+        await self.save_scenario_run_results(trust_log, agent_trust_logs)
         return trust_log, agent_trust_logs
+
+    @sync_to_async
+    def save_scenario_run_results(self, trust_log, agent_trust_logs):
+        result_factory = ResultFactory()
+        result = ScenarioResult(self.scenario_run_id, trust_log, agent_trust_logs)
+        result_factory.save_result(result)
 
     async def end_scenario(self):
         await self.connector.end_scenario(self.distribution, self.scenario_run_id)

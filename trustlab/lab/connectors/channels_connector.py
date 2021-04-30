@@ -1,5 +1,5 @@
 import json
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 from trustlab.lab.connectors.basic_connector import BasicConnector
 from django.db import transaction
 from django.db.models import F, Sum
