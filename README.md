@@ -1,4 +1,4 @@
-# <img src="/_logos/atlas_orange.svg" alt="aTLAS orange" width="5%"> aTLAS
+# <img src="https://github.com/N0omB/aTLAS/raw/master/_logos/atlas_orange.svg" alt="aTLAS orange" width="5%"> aTLAS
 
 This is the repository of aTLAS, a Trust Laboratory for Multi-Agent Systems.
 
