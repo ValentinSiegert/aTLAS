@@ -5,18 +5,33 @@ from trustlab.lab.distributors.greedy_distributor import GreedyDistributor
 from trustlab.lab.distributors.round_robin_distributor import RoundRobinDistributor
 from trustlab.serializers.scenario_serializer import ScenarioSerializer
 from trustlab.models import ResultFactory, ScenarioResult
+from trustlab_host.models import Scenario
 from asgiref.sync import sync_to_async
 
 
 class Director:
+    """
+    Organizes the testbed's environment for one specific scenario run.
+    Therewith decides which supervisors should be involved,
+    prepares the scenarios with them,
+    overwatches the run by informing all involved supervisors about done observations,
+    and terminates the evaluation run by signalling the end to all involved supervisors.
+    All scenario run results are saved with the usage of ScenarioResult and ResultFactory.
+    """
     async def prepare_scenario(self):
+        """
+        Prepares the scenario run by deciding which supervisors to involve,
+        signalling them to prepare everything for the run,
+        and distributing the global agent discovery to all involved supervisors.
+
+        :rtype: None
+        """
         agents = self.scenario.agents
         # check if enough agents are free to work
-        sums = await self.connector.sums_agent_numbers()
-        free_agents = sums['sum_max_agents'] - sums['sum_agents_in_use']
+        sum_max_agents, sum_agents_in_use = await self.connector.sums_agent_numbers()
+        free_agents = sum_max_agents - sum_agents_in_use
         if free_agents < len(agents):
             raise Exception('Currently there are not enough agents free for the chosen scenario.')
-        # TODO: implement scenario syntax checking (until now not required due to predefined scenarios only)
         # distribute agents on supervisors
         supervisors_with_free_agents = await self.connector.list_supervisors_with_free_agents()
         self.distribution = await self.distributor.distribute(agents, supervisors_with_free_agents)
@@ -27,6 +42,11 @@ class Director:
         print(self.discovery)
 
     async def run_scenario(self):
+        """
+        Runs the scenario and manages the correct observation sequence by broadcasting end of observation signal
+        from one supervisor to all other involved ones.
+        Further, it manages the scenario run results and initiates the save.
+        """
         await self.connector.start_scenario(self.distribution.keys(), self.scenario_run_id)
         trust_log = []
         agent_trust_logs = dict((agent, []) for agent in self.scenario.agents)
@@ -58,11 +78,22 @@ class Director:
 
     @sync_to_async
     def save_scenario_run_results(self, trust_log, agent_trust_logs):
+        """
+        Saves the scenario run results with the usage of ScenarioResult and ResultFactory.
+
+        :param trust_log: Scenario run trust log.
+        :type trust_log: list
+        :param agent_trust_logs: Trust logs per agent.
+        :type agent_trust_logs: dict
+        """
         result_factory = ResultFactory()
         result = ScenarioResult(self.scenario_run_id, trust_log, agent_trust_logs)
         result_factory.save_result(result)
 
     async def end_scenario(self):
+        """
+        Signals the end of the scenario run to all involved supervisors.
+        """
         await self.connector.end_scenario(self.distribution, self.scenario_run_id)
 
     def __init__(self, scenario):

@@ -1,4 +1,4 @@
-# <img src="/logos/atlas_orange.svg" alt="aTLAS orange" width="5%"> aTLAS
+# <img src="/_logos/atlas_orange.svg" alt="aTLAS orange" width="5%"> aTLAS
 
 This is the repository of aTLAS, a Trust Laboratory for Multi-Agent Systems.
 
@@ -26,10 +26,6 @@ aTLAS project page: [https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/]
     ```bash
     pipenv install
     ```
-   **OR** install all requirements in your virtual environment for this project with:
-   ```bash
-    pip install -r requirements.pip --exists-action w
-    ```
         
 4. Modify ``Additional Options`` of your django configuration with (for no auto-reload after editing scenario files):
     ```bash
@@ -45,7 +41,7 @@ aTLAS project page: [https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/]
 
 2. Run aTLAS:
     ```bash
-    python3 manage.py runserver 8000 --noreload
+    python manage.py runserver 8000 --noreload
     ```
 
 3. Run at least on supervisor with the included submodule and connect it to aTLAS. (https://github.com/N0omB/aTLAS_host)
@@ -57,9 +53,11 @@ aTLAS project page: [https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/]
 
 - Every scenario configuration file has to end with ``_scenario.py``.
 
-- All scenario parameters require to be the upperCase version of the respective Scenario.\_\_init\_\_ arguments
+- All scenario parameters require to be the upperCase version of the respective Scenario.\_\_init\_\_ arguments.
 
-- Possible scenario arguments derive from Scenario.\_\_init\_\_ arguments list, where parameters without default value are mandatory for scenario configuration file as well
+- Possible scenario arguments derive from Scenario.\_\_init\_\_ arguments list, where parameters without default value are mandatory for scenario configuration file as well.
+
+- Scenario files require ending with two new line feeds instead of one as described in the python style guide.
 
 
 ## Links To Know
@@ -74,6 +72,6 @@ https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/demo/
 https://github.com/N0omB/aTLAS_host
 
 <!-- Identifiers, in alphabetical order -->
-[atlas-logo-orange]: /logos/atlas_orange.svg
+[atlas-logo-orange]: /_logos/atlas_orange.svg
 
 

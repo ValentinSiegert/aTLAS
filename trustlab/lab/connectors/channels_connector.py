@@ -8,9 +8,14 @@ from channels.layers import get_channel_layer
 
 
 class ChannelsConnector(BasicConnector):
+    """
+    Manages the supervisor connections with expecting all supervisors to connect via websockets and thus using
+    Django Channels as well as the data base to store active channel connections.
+    """
     @sync_to_async
     def sums_agent_numbers(self):
-        return Supervisor.objects.aggregate(sum_max_agents=Sum('max_agents'), sum_agents_in_use=Sum('agents_in_use'))
+        sums = Supervisor.objects.aggregate(sum_max_agents=Sum('max_agents'), sum_agents_in_use=Sum('agents_in_use'))
+        return sums['sum_max_agents'], sums['sum_agents_in_use']
 
     @sync_to_async
     def list_supervisors_with_free_agents(self):

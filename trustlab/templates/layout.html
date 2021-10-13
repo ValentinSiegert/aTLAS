@@ -28,7 +28,7 @@
         <div class="mdl-layout__header-row">
           <!-- Title -->
           <span class="mdl-layout-title">
-              <a href="{% url 'index' %}">
+              <a id="header-index-anchor" href="{% url 'index' %}"> <!-- this href may got rewritten by trustlab.js -->
                   <img src="{% static 'trustlab/logos/atlas_grey.svg' %}" width="7%">
                   <span class="mdl-layout--hide-on-tablet mdl-layout--hide-on-phone">aTLAS</span>
               </a>
@@ -65,7 +65,7 @@
                   <span class="aTLAS-orange">
                       <img src="{% static 'trustlab/logos/atlas_orange.svg' %}" width="30px"> aTLAS
                   </span>
-                  <span class="version-info" style="margin-left: 5px; margin-right: 5px;">v 0.0.1</span>
+                  <span class="version-info" style="margin-left: 5px; margin-right: 5px;">{% block version %}{% endblock %}</span>
                   © {% now "Y" %}
               </div>
               <ul class="mdl-mini-footer__link-list">

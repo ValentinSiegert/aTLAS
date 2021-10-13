@@ -249,6 +249,8 @@ scenarioSelector.change(showScenarioDescription);
 // explained at http://stackoverflow.com/a/30319853/1214237
 function r(f){/in/.test(document.readyState)?setTimeout('r('+f+')',9):f()} // jshint ignore:line
 r(function(){
+    // dynamic URL changes for deploy with enabled ProxyPass
+    $("#header-index-anchor").attr("href", window.location.pathname);
     if (scenario_load_error) {
         snackMessage(true, scenario_load_error);
     }

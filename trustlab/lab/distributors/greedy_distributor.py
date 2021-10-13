@@ -3,6 +3,9 @@ from asgiref.sync import sync_to_async
 
 
 class GreedyDistributor(BasicDistributor):
+    """
+    Distributes given agents of a scenario in a greedy fashion over all available supervisors.
+    """
     @sync_to_async
     def distribute(self, agents, supervisors):
         distribution = {}

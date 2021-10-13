@@ -2,8 +2,15 @@ from abc import ABC, abstractmethod
 
 
 class BasicConnector(ABC):
+    """
+    Basic class to manage the supervisor connections.
+    """
     @abstractmethod
     def sums_agent_numbers(self):
+        """
+        :return: sum of maximal agents and sum of agents in use over all registered supervisors.
+        :rtype: (int, int)
+        """
         pass
 
     @abstractmethod

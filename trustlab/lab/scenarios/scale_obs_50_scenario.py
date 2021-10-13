@@ -359,28 +359,51 @@ HISTORY = {'A': {'B': 1.0, 'C': 1.0, 'D': 1.0},
  'C': {'A': 1.0, 'B': 1.0, 'D': 1.0},
  'D': {'A': 1.0, 'B': 1.0, 'C': 1.0}}
 
-TRUST_THRESHOLDS = {'cooperation': 0.5, 'forgivability': -0.5}
+SCALES_PER_AGENT = {'A': {'cooperation': 0.5,
+       'default': 0.0,
+       'forgivability': -0.5,
+       'maximum': 1.0,
+       'minimum': -1.0,
+       'name': 'Trust Scale by Marsh and Briggs (2009)',
+       'package': 'marsh_briggs_scale'},
+ 'B': {'cooperation': 0.5,
+       'default': 0.0,
+       'forgivability': -0.5,
+       'maximum': 1.0,
+       'minimum': -1.0,
+       'name': 'Trust Scale by Marsh and Briggs (2009)',
+       'package': 'marsh_briggs_scale'},
+ 'C': {'cooperation': 0.5,
+       'default': 0.0,
+       'forgivability': -0.5,
+       'maximum': 1.0,
+       'minimum': -1.0,
+       'name': 'Trust Scale by Marsh and Briggs (2009)',
+       'package': 'marsh_briggs_scale'},
+ 'D': {'cooperation': 0.5,
+       'default': 0.0,
+       'forgivability': -0.5,
+       'maximum': 1.0,
+       'minimum': -1.0,
+       'name': 'Trust Scale by Marsh and Briggs (2009)',
+       'package': 'marsh_briggs_scale'}}
 
-WEIGHTS = {'age': 1.0,
- 'agreement': 1.0,
- 'authority': 1.0,
- 'direct experience': 1.0,
- 'popularity': 1.0,
- 'provenance': 1.0,
- 'recency': 1.0,
- 'recommendation': 1.0,
- 'related resource': 1.0,
- 'specificity': 1.0,
- 'topic': 1.0}
-
-METRICS_PER_AGENT = {'A': ['direct experience', 'popularity', 'recommendation'],
- 'B': ['direct experience', 'popularity', 'recommendation'],
- 'C': ['direct experience', 'popularity', 'recommendation'],
- 'D': ['direct experience', 'popularity', 'recommendation']}
-
-AUTHORITIES = {}
-
-TOPICS = {}
+METRICS_PER_AGENT = {'A': {'__final__': {'name': 'weighted_average', 'weights': {}},
+       'content_trust.direct_experience': {},
+       'content_trust.popularity': {},
+       'content_trust.recommendation': {}},
+ 'B': {'__final__': {'name': 'weighted_average', 'weights': {}},
+       'content_trust.direct_experience': {},
+       'content_trust.popularity': {},
+       'content_trust.recommendation': {}},
+ 'C': {'__final__': {'name': 'weighted_average', 'weights': {}},
+       'content_trust.direct_experience': {},
+       'content_trust.popularity': {},
+       'content_trust.recommendation': {}},
+ 'D': {'__final__': {'name': 'weighted_average', 'weights': {}},
+       'content_trust.direct_experience': {},
+       'content_trust.popularity': {},
+       'content_trust.recommendation': {}}}
 
 DESCRIPTION = 'Scalability Test with observation upscaling for WI 2020'
 

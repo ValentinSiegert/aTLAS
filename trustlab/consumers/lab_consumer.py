@@ -8,6 +8,10 @@ from trustlab.lab.director import Director
 
 
 class LabConsumer(AsyncJsonWebsocketConsumer):
+    """
+    LabConsumer class, with sequential process logic of the Director in its receive_json method.
+    It is therewith the main interface between User Agent and Director.
+    """
     async def connect(self):
         await self.accept()
 
@@ -16,14 +20,22 @@ class LabConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content, **kwargs):
         if content['type'] == 'run_scenario':
+            try:
+                Scenario.correct_number_types(content['scenario'])
+            except (ModuleNotFoundError, SyntaxError) as error:
+                await self.send_json({
+                    'message': f'Scenario Description Error: {str(error)}',
+                    'type': 'error'
+                })
+                return
             serializer = ScenarioSerializer(data=content['scenario'])
             if serializer.is_valid():
                 try:
                     scenario_factory = ScenarioFactory()
                     scenario = serializer.create(serializer.data)
-                except ValueError as value_error:
+                except (ValueError, AttributeError, TypeError, ModuleNotFoundError, SyntaxError) as error:
                     await self.send_json({
-                        'message': str(value_error),
+                        'message': f'Scenario Error: {str(error)}',
                         'type': 'error'
                     })
                     return
