@@ -32,7 +32,7 @@ aTLAS project page: [https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/]
     --noreload
     ```
 
-5. Install also at least one supervisor. (https://github.com/N0omB/aTLAS_host)
+5. Install also at least one supervisor. (https://github.com/ValentinSiegert/aTLAS_host)
 
    
 ## Run
@@ -44,7 +44,7 @@ aTLAS project page: [https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/]
     python manage.py runserver 8000 --noreload
     ```
 
-3. Run at least on supervisor with the included submodule and connect it to aTLAS. (https://github.com/N0omB/aTLAS_host)
+3. Run at least on supervisor with the included submodule and connect it to aTLAS. (https://github.com/ValentinSiegert/aTLAS_host)
 
 
 ## How To Scenario
@@ -69,7 +69,7 @@ https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/
 https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/demo/
 
 * Host Library Repository and Submodule at `trustlab_host` \
-https://github.com/N0omB/aTLAS_host
+https://github.com/ValentinSiegert/aTLAS_host
 
 <!-- Identifiers, in alphabetical order -->
 [atlas-logo-orange]: /_logos/atlas_orange.svg
