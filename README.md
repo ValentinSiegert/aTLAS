@@ -93,8 +93,6 @@ for a decentralized web has to be done manually with a high effort.
 
 ## ⚡ Getting Started
 
-> By default, please follow the local setup. The setup for VSRians is only for those knowing what they do there.
-
 1. Install [Redis][redis-quickstart].
 
 2. Clone Git Repository, [including all submodules][git-submodules].
@@ -112,8 +110,6 @@ for a decentralized web has to be done manually with a high effort.
 5. Install also at least one supervisor, c.f. [submodule trustlab_host][trustlab-host-repo].
 
 ## 👟 Usage
-
-> By default, please follow the local usage. The usage for VSRians is only for those knowing what they do there.
 
 1. Run local Redis server in shell
     ```shell
