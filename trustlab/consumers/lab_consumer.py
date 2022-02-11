@@ -1,13 +1,13 @@
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import json
 import trustlab.lab.config as config
 import time
+from trustlab.consumers.chunk_consumer import ChunkAsyncJsonWebsocketConsumer
 from trustlab.models import *
 from trustlab.serializers.scenario_serializer import ScenarioSerializer
 from trustlab.lab.director import Director
 
 
-class LabConsumer(AsyncJsonWebsocketConsumer):
+class LabConsumer(ChunkAsyncJsonWebsocketConsumer):
     """
     LabConsumer class, with sequential process logic of the Director in its receive_json method.
     It is therewith the main interface between User Agent and Director.
@@ -39,8 +39,18 @@ class LabConsumer(AsyncJsonWebsocketConsumer):
                         'type': 'error'
                     })
                     return
-                if scenario not in scenario_factory.scenarios:
-                    scenario_factory.scenarios.append(scenario)
+                if len(scenario.agents) > 0:
+                    if scenario not in scenario_factory.scenarios:
+                        scenario_factory.scenarios.append(scenario)
+                else:
+                    if not any([True if scen.name == scenario.name else False for scen in scenario_factory.scenarios]):
+                        await self.send_json({
+                            'message': f'Scenario Error: Scenario transmitted is empty and not known.',
+                            'type': 'error'
+                        })
+                        return
+                    else:
+                        scenario = [scen for scen in scenario_factory.scenarios if scenario.name == scen.name][0]
                 director = Director(scenario)
                 try:
                     async with config.PREPARE_SCENARIO_SEMAPHORE:

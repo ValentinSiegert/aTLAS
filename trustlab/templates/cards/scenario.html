@@ -11,6 +11,13 @@
                         In future versions you will be able to also create your own scenario here.
                     </p>
                     <p>
+                        <i class="material-icons">new_releases</i>
+                        For demo purposes we only list here scenarios, which are short in total execution time.
+                        All mentioned scenarios of any papers are to be found in the
+                        <a href="https://github.com/ValentinSiegert/aTLAS/tree/master/trustlab/lab/scenarios" target="_blank">github repository</a>
+                        or at the <a href="https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/" target="_blank">project page</a>.
+                    </p>
+                    <p>
                         <b>
                             Please choose a scenario and proceed with starting the laboratory runtime:
                         </b>
@@ -20,8 +27,12 @@
                         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                           <select class="mdl-textfield__input" id="selector-scenario" name="scenario">
                             <option></option>
-                            {% for scenario in scenarios %}
-                            <option value="{{scenario.name|safe}}">{{scenario.name|safe}}</option>
+                            {% for category, names in scenario_categories %}
+                                <optgroup label="{{category|safe}}">
+                                    {% for name in names %}
+                                    <option value="{{name|safe}}">{{name|safe}}</option>
+                                    {% endfor %}
+                                </optgroup>
                             {% endfor %}
                           </select>
                           <label class="mdl-textfield__label" for="selector-scenario">Scenario</label>
@@ -32,6 +43,16 @@
                         <summary>Details</summary>
                         {% for scenario in scenarios %}
                         <ul class="mdl-list scenario-ul not-displayed" data-scenario="{{scenario.name|safe}}">
+                        {% if scenario.lazy_note %}
+                          <li class="mdl-list__item">
+                            <span>
+                              <span class="mdl-list__item-primary-content">Featured Note</span>
+                              <span class="trustlab-li-body">
+                                {{scenario.lazy_note|safe}}
+                              </span>
+                            </span>
+                          </li>
+                        {% endif %}
                           <li class="mdl-list__item">
                             <span>
                               <span class="mdl-list__item-primary-content">Description</span>
@@ -40,6 +61,7 @@
                               </span>
                             </span>
                           </li>
+                        {% if not scenario.lazy_note %}
                           <li class="mdl-list__item">
                             <span>
                               <span class="mdl-list__item-primary-content">Agents</span>
@@ -144,6 +166,7 @@
                             </span>
                           </li>
                           {% endif %}
+                        {% endif %}
                           {# For each important aspect in the scenario you can print it out here within this list #}
                         </ul>
                         {% endfor %}

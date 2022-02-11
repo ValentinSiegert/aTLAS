@@ -107,5 +107,3 @@ class Director:
             self.distributor = GreedyDistributor()
         self.distribution = None
         self.discovery = None
-
-

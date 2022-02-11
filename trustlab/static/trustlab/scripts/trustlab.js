@@ -59,7 +59,7 @@ function onLabSocketMessage(messageEvent){
 }
 
 function startLabRuntime() {
-    let scenarioName = scenarioSelector.children("option:selected").val();
+    let scenarioName = scenarioSelector.val();
     if (scenarioName !== "")
     {
         let scenario = scenarios.filter(scenario => scenario.name === scenarioName)[0];
@@ -176,7 +176,7 @@ function openLabRuntimeCard() {
 }
 
 function showScenarioDescription() {
-    let value = scenarioSelector.children("option:selected").val();
+    let value = scenarioSelector.val();
     let scenarioDetails = $('#scenario-details');
     if (scenarioDetails.hasClass("not-displayed")) {
         scenarioDetails.removeClass("not-displayed");
