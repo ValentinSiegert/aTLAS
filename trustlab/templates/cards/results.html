@@ -6,8 +6,9 @@
                     <h2 class="mdl-card__title-text" id="results_header">Results</h2>
                 </div>
                 <div class="mdl-card__supporting-text">
+                    <pre id="time_log">Your scenario finished!</pre>
+                    <pre id="supervisor_log"></pre>
                     <p>
-                        Your scenario finished!<br>
                         For respective results see forward below:
                     </p>
                     <p>
@@ -21,9 +22,13 @@
                         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="btn-specify-scenario2">Specify another Scenario</button>
                         <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect neighbour-button" id="btn-pick-results2">Review other Results</button>
                         <div class="mdl-layout-spacer"></div>
+                        <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored btn-copy-results" onclick="navigator.clipboard.writeText(JSON.stringify(scenario_result, undefined, 2))"><i class="material-icons">content_copy</i></button>
                         <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored btn-share-results"><i class="material-icons">share</i></button>
                     </div>
                     <div class = "mdl-card__menu">
+                        <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored btn-copy-results" onclick="navigator.clipboard.writeText(JSON.stringify(scenario_result, undefined, 2))">
+                            <i class="material-icons">content_copy</i>
+                        </button>
                         <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored btn-share-results">
                           <i class="material-icons">share</i>
                         </button>

@@ -97,6 +97,8 @@
         "LAB_URL": true,
         "waitForSocketConnection": true,
         "removeUrlFragement": true,
-        "scenario_load_error": true
+        "scenario_load_error": true,
+        "SCENARIO_DETAILS": true,
+        "hljs": true
     }
 }

@@ -31,7 +31,7 @@ class ChunkAsyncJsonWebsocketConsumer(AsyncJsonWebsocketConsumer):
     async def send_part(self, part_number):
         existing_parts = len(self.parts_to_send)
         if self.parts_to_send and part_number < existing_parts:
-            print(f'Transferring part {part_number + 1}/{existing_parts} ...')
+            # print(f'Transferring part {part_number + 1}/{existing_parts} ...')
             await self.send_json({
                 'type': 'chunked_transfer',
                 'part_number': (part_number + 1, existing_parts),

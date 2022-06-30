@@ -3,10 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-    <title>{% block title %}{% endblock %}</title>
+    <!-- Primary Meta Tags -->
+    <title>aTLAS</title>
+    <meta name="title" content="aTLAS: a Testbed to Examine Trust for a Redecentralized Web">
+    <meta name="description" content="Enabling a broad comparison of trust mechanics, scales and models.">
     {% load static %}
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/demo/">
+    <meta property="og:title" content="aTLAS: a Testbed to Examine Trust for a Redecentralized Web">
+    <meta property="og:description" content="Enabling a broad comparison of trust mechanics, scales and models.">
+    <meta property="og:image" content="https://vsr.informatik.tu-chemnitz.de/trustlab/static/trustlab/logos/atlas_thumbnail.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://vsr.informatik.tu-chemnitz.de/projects/2020/atlas/demo/">
+    <meta property="twitter:title" content="aTLAS: a Testbed to Examine Trust for a Redecentralized Web">
+    <meta property="twitter:description" content="Enabling a broad comparison of trust mechanics, scales and models.">
+    <meta property="twitter:image" content="https://vsr.informatik.tu-chemnitz.de/trustlab/static/trustlab/logos/atlas_thumbnail.png">
+
 {#    <link rel="stylesheet" type="text/css" href="{% static 'exms/style/jumbotron.css' %}" />#}
     <!-- Material Design Lite MDL -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
@@ -16,6 +32,7 @@
 {#    <link rel="stylesheet" type="text/css" href="{% static 'trustlab/style/darkMaterial.min.css' %}" />#}
     <link rel="stylesheet" type="text/css" href="{% static 'trustlab/style/trustlab.css' %}" />
     <link rel="shortcut icon" type="image/png" href="{% static 'trustlab/logos/favicon.ico' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'trustlab/style/tomorrow.min.css' %}">
     {% block header %}
     {% endblock %}
 </head>

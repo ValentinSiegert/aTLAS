@@ -26,12 +26,30 @@ function onLabSocketMessage(messageEvent){
      * @property {string} type
      * @property {string} scenario_run_id
      * @property {string} trust_log
+     * @property {string} trust_log_dict
      * @property {string} agents_log
+     * @property {string} agents_log_dict
+     * @property {string} scenario_name
+     * @property {int} supervisor_amount
+     * @property {string} atlas_times
      * @property {string} message
      */
     /** @type {webSocketMsg} */
     let data = JSON.parse(messageEvent.data);
     if (data.type === "scenario_results") {
+        scenario_result.scenarioName = data.scenario_name;
+        scenario_result.trustLog = JSON.parse(data.trust_log_dict);
+        scenario_result.agentsLog = JSON.parse(data.agents_log_dict);
+        scenario_result.supervisorAmount = data.supervisor_amount;
+        $("#supervisor_log").text('The scenario run was executed on {0} supervisor(s).'.f(data.supervisor_amount));
+        let timeLog = $("#time_log");
+        timeLog.text('Your scenario "{0}" finished!'.f(scenario_result.scenarioName));
+        if (data.atlas_times) {
+            scenario_result.atlasTimes = data.atlas_times;
+            timeLog.text('{0} in {1}s!\nIt took:\nfor preparation: {2}s\nfor execution: {3}s\nfor clean up: {4}s'.f(
+                timeLog.text().slice(0, -1),scenario_result.atlasTimes.preparation_time+scenario_result.atlasTimes.execution_time+scenario_result.atlasTimes.cleanup_time,
+                scenario_result.atlasTimes.preparation_time, scenario_result.atlasTimes.execution_time, scenario_result.atlasTimes.cleanup_time));
+        }
         $("#trust_log").text(data.trust_log);
         let agents_log = JSON.parse(data.agents_log);
         let agents_log_end = $("#agents_log_end");
@@ -180,11 +198,13 @@ function showScenarioDescription() {
     let scenarioDetails = $('#scenario-details');
     if (scenarioDetails.hasClass("not-displayed")) {
         scenarioDetails.removeClass("not-displayed");
+        scenarioDetails.html(SCENARIO_DETAILS(scenarios.find(s => s.name === value)));
     } else if (value === "" && !scenarioDetails.hasClass("not-displayed")){
         scenarioDetails.addClass("not-displayed");
+    } else {
+        scenarioDetails.html(SCENARIO_DETAILS(scenarios.find(s => s.name === value)));
     }
-    $(".scenario-ul:not(.not-displayed)").addClass("not-displayed");
-    $(".scenario-ul[data-scenario='"+value+"']").removeClass("not-displayed");
+    hljs.highlightAll();
 }
 
 function cancelScenarioResults() {
@@ -235,14 +255,6 @@ $(".btn-share-results").click(function() {
 $("#close-share-dialog").click(function() {
     shareDialog.close();
   });
-let aboutDialog = $("#about-dialog")[0];
-$("#btn-about-dialog").click(function() {
-    aboutDialog.showModal();
-    /* Or dialog.show(); to show the dialog without a backdrop. */
-  });
-$("#close-about-dialog").click(function() {
-    aboutDialog.close();
-  });
 scenarioSelector.change(showScenarioDescription);
 
 // using r function for correct ready state
@@ -266,6 +278,7 @@ r(function(){
         }
     }
 });
-
+// define global variables
+let scenario_result = {scenarioName: "", supervisorAmount: 0, atlasTimes: {}, trustLog: {}, agentsLog: {}};
 
 

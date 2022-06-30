@@ -52,6 +52,9 @@ class SupervisorsConsumer(ChunkAsyncJsonWebsocketConsumer):
             if content["type"] and content["type"] == "max_agents":
                 supervisor = Supervisor.objects.get(channel_name=self.channel_name)
                 supervisor.max_agents = content["max_agents"]
+                supervisor.ip_address = content["ip_address"]
+                if 'hostname' in content:
+                    supervisor.hostname = content["hostname"]
                 supervisor.save()
                 answer = {"type": "max_agents", "status": 200}
                 await self.send_json(answer)

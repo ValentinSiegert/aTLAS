@@ -2,10 +2,6 @@
 
 {% load static %}
 
-{% block title %}
-aTLAS
-{% endblock %}
-
 {% block version %}
 {{ atlas_version }}
 {% endblock %}
@@ -13,9 +9,10 @@ aTLAS
 {#{% block nav_home %}class="active"{% endblock %}#}
 
 {% block scripts %}
+    {% if not eval_run %}
     <script>
         let scenarios;
-        {% if scenarios %}
+        {% if scenarios_JSON %}
         scenarios = {{ scenarios_JSON|safe }};
         {% endif %}
         const INDEX_URL = "{{ index_url }}"
@@ -25,15 +22,20 @@ aTLAS
         scenario_load_error = "{{ ScenarioLoadError }}";
         {% endif %}
     </script>
+    <script src="{% static 'trustlab/scripts/highlight.min.js' %}"></script>
     <script src="{% static 'trustlab/scripts/trustlab.js' %}"></script>
+    {% endif %}
 {% endblock %}
-
 {% block body %}
+    {% include "cards/about.html" %}
+{% if not eval_run %}
     {% include "cards/start.html" %}
     {% include "cards/pick_results.html" %}
     {% include "cards/scenario.html" %}
     {% include "cards/runtime.html" %}
     {% include "cards/loading_results.html" %}
     {% include "cards/results.html" %}
-    {% include "cards/about.html" %}
+{% else %}
+    {% include "cards/eval_run.html" %}
+{% endif %}
 {% endblock %}

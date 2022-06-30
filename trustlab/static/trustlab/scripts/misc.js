@@ -54,7 +54,7 @@ function copy_text_to_clipboard(input_id)
     let copyText = document.getElementById(input_id);
     copyText.select();
     copyText.setSelectionRange(0, 99999);
-    document.execCommand("copy");
+    navigator.clipboard.writeText(copyText.value);
 }
 
 // got original function from https://stackoverflow.com/a/21394730
@@ -81,6 +81,26 @@ function removeUrlFragement() {
         history.pushState(null, null, '#');
     }
 }
+
+// Thanks to https://stackoverflow.com/a/2648463
+String.prototype.format = String.prototype.f = function() {
+    var s = this,
+        i = arguments.length;
+
+    while (i--) {
+        s = s.replace(new RegExp('\\{' + i + '\\}', 'gm'), arguments[i]);
+    }
+    return s;
+};
+
+let aboutDialog = $("#about-dialog")[0];
+$("#btn-about-dialog").click(function() {
+    aboutDialog.showModal();
+    /* Or dialog.show(); to show the dialog without a backdrop. */
+  });
+$("#close-about-dialog").click(function() {
+    aboutDialog.close();
+  });
 
 // unused functions, kept for potential re-usage
 

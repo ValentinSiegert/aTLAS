@@ -3,19 +3,24 @@ import importlib.util
 import inspect
 import pprint
 import re
+import shutil
 import traceback
 from django.db import models
 from os import listdir, mkdir
 from os.path import isfile, exists, isdir, getsize, basename
 from pathlib import Path
-from trustlab.lab.config import SCENARIO_PATH, SCENARIO_PACKAGE, RESULT_PATH, SCENARIO_LARGE_SIZE, SCENARIO_CATEGORY_SORT
+from trustlab.lab.config import SCENARIO_PATH, SCENARIO_PACKAGE, RESULT_PACKAGE, RESULT_PATH, SCENARIO_LARGE_SIZE,\
+    SCENARIO_CATEGORY_SORT, get_scenario_run_name
 from trustlab_host.models import Scenario
+from types import SimpleNamespace
 
 
 class Supervisor(models.Model):
     channel_name = models.CharField(max_length=120, primary_key=True)
     max_agents = models.IntegerField(default=0)
     agents_in_use = models.IntegerField(default=0)
+    ip_address = models.CharField(max_length=20, default="")
+    hostname = models.CharField(max_length=260, default="")
 
 
 class ObjectFactory:
@@ -23,7 +28,7 @@ class ObjectFactory:
     Generic Class for Object Factories loading and saving objects in a DSL (.py) file.
     """
     @staticmethod
-    def load_object(import_package, object_class_name, object_args, lazy_args=None):
+    def load_object(import_package, object_class_name, object_args, lazy_args=None, known_key_values=None):
         """
         Imports the DSL file of an given object and initiates it.
 
@@ -32,9 +37,11 @@ class ObjectFactory:
         :param object_class_name: the name of the object's class.
         :type object_class_name: str
         :param object_args: All the parameters of the to initiate object
-        :type object_args: inspect.FullArgSpec
+        :type object_args: inspect.FullArgSpec or SimpleNamespace
         :param lazy_args: List of arguments for the lazy load of too large files. Default is None.
         :type lazy_args: list
+        :param known_key_values: Dict of known key value pairs. Default is None.
+        :type known_key_values: dict
         :return: the initiated object to be loaded
         :rtype: Any
         :raises AttributeError: One or more mandatory attribute was not found in object's DSL file.
@@ -54,7 +61,7 @@ class ObjectFactory:
             all_args = [a.upper() for a in object_args.args[1:]]
             # check if all mandatory args are in scenario config
             if all(hasattr(object_config_module, attr) for attr in mandatory_args):
-                object_attrs = {}
+                object_attrs = known_key_values if known_key_values else {}
                 if not lazy_args:
                     for attr in all_args:
                         # check if attr is in config as optional ones may not be present with allowance
@@ -81,7 +88,7 @@ class ObjectFactory:
         :param obj: the object to be saved.
         :type obj: Any
         :param object_args: All the parameters of the to initiate object
-        :type object_args: inspect.FullArgSpec
+        :type object_args: inspect.FullArgSpec or SimpleNamespace
         :param file_path: Full path to the object's DSL file.
         :type file_path: Path
         :param file_exists: whether the object's DSL file already exists.
@@ -168,27 +175,26 @@ class ScenarioFactory(ObjectFactory):
         """
         scenarios = []
         scenario_files = self.get_scenario_files()
-        # get all parameters of scenario init
-        scenario_args = inspect.getfullargspec(Scenario.scenario_args)
-        # only take name and description as more is not required for lazy load
-        scenario_lazy_args = ['NAME', 'DESCRIPTION']
         for file_name, file_package in scenario_files:
             file_size = getsize(self.scenario_path / file_name)
             try:
-                if not self.large_file_size or (self.large_file_size and file_size < self.large_file_size):
-                    scenario = self.load_object(f"{SCENARIO_PACKAGE}.{file_package}", "Scenario", scenario_args)
+                if (not self.large_file_size or (self.large_file_size and file_size < self.large_file_size)) \
+                        and not self.names_only_load:
+                    scenario = self.load_object(f"{SCENARIO_PACKAGE}.{file_package}", "Scenario", self.scenario_args)
                 else:
-                    scenario = self.load_object(f"{SCENARIO_PACKAGE}.{file_package}", "Scenario", scenario_args,
-                                                scenario_lazy_args)
-                    if self.large_file_size > 999999:
-                        file_size_str = f'{file_size / 1000000} MB'
-                        large_size_str = f'{self.large_file_size / 1000000} MB'
-                    else:
-                        file_size_str = f'{file_size / 1000} KB'
-                        large_size_str = f'{self.large_file_size / 1000} KB'
-                    scenario.lazy_note = f'This scenario file exceeded with its file size of {file_size_str} ' \
-                                         f'the file size limit of {large_size_str}. Thus, the scenario was lazy ' \
-                                         f'loaded and will only include its description.'
+                    scenario = self.load_object(f"{SCENARIO_PACKAGE}.{file_package}", "Scenario", self.scenario_args,
+                                                self.scenario_lazy_args)
+                    if not self.names_only_load:
+                        if self.large_file_size > 999999:
+                            file_size_str = f'{file_size / 1000000} MB'
+                            large_size_str = f'{self.large_file_size / 1000000} MB'
+                        else:
+                            file_size_str = f'{file_size / 1000} KB'
+                            large_size_str = f'{self.large_file_size / 1000} KB'
+                        scenario.lazy_note = f'This scenario file exceeded with its file size of {file_size_str} ' \
+                                             f'the file size limit of {large_size_str}. Thus, the scenario was lazy ' \
+                                             f'loaded and will only include its description.'
+                    scenario.not_fully_loaded = True
             except (ValueError, AttributeError, TypeError, ModuleNotFoundError, SyntaxError):
                 print(f'Error at Scenario file @{file_name}:')
                 traceback.print_exc()
@@ -228,18 +234,6 @@ class ScenarioFactory(ObjectFactory):
                 config_path = self.scenario_path / file_name
                 self.save_object(scenario, scenario_args, config_path)
 
-    def prepare_web_ui_print(self):
-        """
-        Prepares object attributes for the Web UI print, as they are only required for easier printing at the UI.
-
-        :rtype: None
-        """
-        for scenario in self.scenarios:
-            if scenario.any_agents_use_metric('content_trust.authority'):
-                scenario.authorities = scenario.agents_with_metric('content_trust.authority')
-            if scenario.any_agents_use_metric('content_trust.topic'):
-                scenario.topics = scenario.agents_with_metric('content_trust.topic')
-
     def get_scenario_files(self):
         """
         To categorize scenarios, this method scans for scenarios in direct subdirs of the scenario dir.
@@ -255,7 +249,7 @@ class ScenarioFactory(ObjectFactory):
             subpackage_scenarios = [f'{basename(subpackage)}/{file}' for file in listdir(subpackage)
                                     if isfile(subpackage / file) and file.endswith("_scenario.py")]
             scenario_file_names += subpackage_scenarios
-        scenario_files = [(file, file.split(".")[0].replace('/', '.')) for file in scenario_file_names]
+        scenario_files = [(file, self.get_package(file)) for file in scenario_file_names]
         return scenario_files
 
     def get_scenarios_in_categories(self):
@@ -277,18 +271,72 @@ class ScenarioFactory(ObjectFactory):
         for key in scenario_categories.keys():
             scenario_categories[key] = sorted(scenario_categories[key])
         # sort by categories
-        category_sort = SCENARIO_CATEGORY_SORT + sorted([c for c in scenario_categories.keys() if c not in SCENARIO_CATEGORY_SORT and c != 'Misc']) + ['Misc']
+        category_sort = SCENARIO_CATEGORY_SORT + sorted([c for c in scenario_categories.keys() if c not in
+                                                         SCENARIO_CATEGORY_SORT and c != 'Misc']) + ['Misc']
         index_map = {v: i for i, v in enumerate(category_sort)}
         return sorted(scenario_categories.items(), key=lambda pair: index_map[pair[0]])
 
-    def __init__(self, lazy_load=False):
+    def get_scenario(self, name):
+        """
+        Returns the fully loaded scenario with the given name.
+
+        :param name: Name of the scenario.
+        :type name: str
+        :return: Scenario with the given name.
+        :rtype: Scenario
+        :raises RuntimeError: If no scenario with the given name is found or Scenario could not be loaded.
+        """
+        for scenario_in_list in self.scenarios:
+            if scenario_in_list.name == name:
+                if hasattr(scenario_in_list, "not_fully_loaded"):
+                    try:
+                        scenario = self.load_object(f"{SCENARIO_PACKAGE}.{self.get_package(scenario_in_list.file_name)}",
+                                                    "Scenario", self.scenario_args)
+                    except (ValueError, AttributeError, TypeError, ModuleNotFoundError, SyntaxError):
+                        print(f'Error at Scenario file @{scenario_in_list.file_name}:')
+                        traceback.print_exc()
+                        raise RuntimeError(f"Scenario {scenario_in_list.name}@{scenario_in_list.file_name}"
+                                           f"was not loaded due to error.")
+                    return scenario
+                else:
+                    return scenario_in_list
+        raise RuntimeError(f"Scenario {name} not found.")
+
+    def scenario_exists(self, name):
+        """
+        Returns True if a scenario with the given name exists by only checking scenario names.
+
+        :param name: Name of the scenario.
+        :type name: str
+        :rtype: bool
+        """
+        return any([True if scenario.name == name else False for scenario in self.scenarios])
+
+    @staticmethod
+    def get_package(file_name):
+        """
+        Returns the package name of the scenario with the given file name.
+
+        :param file_name: Name of the scenario file.
+        :type file_name: str
+        :return: Package name of the scenario.
+        :rtype: str
+        """
+        return file_name.split(".")[0].replace('/', '.')
+
+    def __init__(self, lazy_load=False, names_only_load=False):
         super().__init__()
         self.scenario_path = SCENARIO_PATH
         self.large_file_size = SCENARIO_LARGE_SIZE if lazy_load else None
+        self.names_only_load = names_only_load
+        # get all parameters of scenario init
+        self.scenario_args = inspect.getfullargspec(Scenario.scenario_args)
+        # only take name and description as more is not required for lazy load
+        self.scenario_lazy_args = ['NAME', 'DESCRIPTION']
         self.scenarios = self.load_scenarios()
 
     def __del__(self):
-        if not self.large_file_size:
+        if not self.large_file_size and not self.names_only_load:
             self.save_scenarios()
 
 
@@ -296,13 +344,19 @@ class ScenarioResult:
     """
     Represents the results of one scenario run with its id.
     """
-    def __init__(self, scenario_run_id, trust_log, agent_trust_logs):
+    def __init__(self, scenario_run_id, scenario_name, supervisor_amount, trust_log, trust_log_dict, agent_trust_logs,
+                 agent_trust_logs_dict, atlas_times=None):
         self.scenario_run_id = scenario_run_id
+        self.scenario_name = scenario_name
+        self.supervisor_amount = supervisor_amount
         self.trust_log = trust_log
+        self.trust_log_dict = trust_log_dict
         self.agent_trust_logs = agent_trust_logs
+        self.agent_trust_logs_dict = agent_trust_logs_dict
+        self.atlas_times = atlas_times
 
 
-class ResultFactory:
+class ResultFactory(ObjectFactory):
     """
     Reads and writes scenario run results from/to log files to be able to answer queries on past results.
     """
@@ -332,7 +386,11 @@ class ResultFactory:
                 with open(path, 'r') as agent_trust_log_file:
                     agent_trust_log_lines = [line for line in agent_trust_log_file.readlines() if line != "\n"]
                     agent_trust_logs[agent] = ''.join(agent_trust_log_lines)
-            return ScenarioResult(scenario_run_id, trust_log, agent_trust_logs)
+            result_key_values = {'scenario_run_id': scenario_run_id, 'scenario_name': '', 'supervisor_amount': 0,
+                                 'trust_log': trust_log, 'trust_log_dict': None, 'agent_trust_logs': agent_trust_logs,
+                                 'agent_trust_logs_dict': None, 'atlas_times': None}
+            return self.load_object(f'{self.result_package}.{result_dir.name}.{get_scenario_run_name(scenario_run_id)}',
+                                    "ScenarioResult", self.dict_log_params, known_key_values=result_key_values)
         else:
             raise OSError(f"Given path '{result_dir}' for scenario result read is not a directory or does not exist.")
 
@@ -352,6 +410,22 @@ class ResultFactory:
             agent_trust_log_path = f"{result_dir}/{agent}_trust_log.txt"
             with open(agent_trust_log_path, 'w+') as agent_trust_log_file:
                 print(''.join(agent_trust_log), file=agent_trust_log_file)
+        dict_log_path = result_dir / f"{get_scenario_run_name(scenario_result.scenario_run_id)}.py"
+        self.save_object(scenario_result, self.dict_log_params, dict_log_path, file_exists=False)
+
+    def save_dict_log_result(self, scenario_result):
+        """
+        Save only dict_log variables to file.
+
+        :param scenario_result: ScenarioResult object to be saved.
+        :type scenario_result: ScenarioResult
+        :rtype: None
+        """
+        result_dir = self.get_result_dir(scenario_result.scenario_run_id)
+        if not exists(result_dir) or not isdir(result_dir):
+            mkdir(result_dir)
+        dict_log_path = result_dir / f"{get_scenario_run_name(scenario_result.scenario_run_id)}.py"
+        self.save_object(scenario_result, self.dict_log_params, dict_log_path, file_exists=False)
 
     def get_result_dir(self, scenario_run_id):
         """
@@ -360,11 +434,29 @@ class ResultFactory:
         :return: Path to results of scenario run id.
         :rtype: pathlib.Path
         """
-        split_index = len(scenario_run_id.split("_")[0]) + 1  # index to cut constant of runId -> 'scenarioRun_'
-        folder_name = scenario_run_id[split_index:]
+        folder_name = get_scenario_run_name(scenario_run_id)
         return self.result_path / folder_name
 
+    def copy_result_pys(self, scenario_run_id):
+        """
+        Copy python files from result folders to evaluator results dir.
+
+        :param scenario_run_id: Scenario run id.
+        :type scenario_run_id: str
+        :return: None
+        """
+        eval_result_path = self.result_path / 'evaluator_results'
+        if not exists(eval_result_path):
+            mkdir(eval_result_path)
+        shutil.copy(self.get_result_dir(scenario_run_id) / f"{get_scenario_run_name(scenario_run_id)}.py",
+                    eval_result_path)
+
     def __init__(self):
+        super().__init__()
+        # adding dict log parameters for loading and saving, is in SimpleNameSpace for object with args variable
+        self.dict_log_params = SimpleNamespace(args=['self', 'scenario_name', 'supervisor_amount', 'trust_log_dict',
+                                                     'agent_trust_logs_dict', 'atlas_times'], defaults=tuple([None]))
         self.result_path = RESULT_PATH
+        self.result_package = RESULT_PACKAGE
         if not exists(RESULT_PATH) or not isdir(RESULT_PATH):
             mkdir(RESULT_PATH)
